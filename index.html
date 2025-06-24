@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Battle</title>
+    <style>
+      /* Created by Nethmi Pallekankanamge & The Coding Sloth */
+
+      @import "https://fonts.googleapis.com/css?family=VT323";
+
+      /* --- Perubahan CSS untuk Layar Penuh --- */
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden; /* Mencegah scroll */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-color: #222; /* Warna latar belakang jika ada sisa ruang */
+      }
+
+      div {
+        -ms-interpolation-mode: nearest-neighbor;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -o-pixelated;
+        image-rendering: pixelated;
+
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+
+        font-family: "VT323";
+        color: #434343;
+        text-shadow: 0.25vmin 0.25vmin #878787;
+
+        overflow: hidden;
+      }
+
+      .opening::before, .opening::after {
+        content: "";
+        display: inline-block;
+        position: absolute;
+        left: 0;
+        width: 100%;
+        height: 50%;
+        background-color: #222;
+
+        transition: top 2s ease-in;
+
+        z-index: 999;
+      }
+
+      .opening::before {
+        content: "LOADING, PLEASE BE PATIENT...";
+        color: white;
+        font-size: 4vmin;
+        text-align: center;
+        line-height: 65vmin;
+        top: 0;
+      }
+
+      .opening::after {
+        top: 50%;
+      }
+
+      .opening.start::before {
+        content: "DONE";
+        top: -50%;
+      }
+      .opening.start::after {
+        top: 100%;
+      }
+
+      .wrapper {
+        margin: auto;
+        width: 75vmin; /* Ukuran relatif untuk konten game */
+        height: 75vmin; /* Ukuran relatif untuk konten game */
+        border: 1px solid #333;
+        position: relative;
+        background-color: #222;
+        background-image: url("https://dl.dropbox.com/s/vzdwyjy9f9xpdts/bg_grass.png?raw=1");
+        background-size: 100% 81.75%;
+        background-repeat: no-repeat;
+        background-position: top center;
+        z-index: 0;
+        /* Tambahan untuk membuat wrapper tetap di tengah layar penuh */
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      .dialogue {
+        --height: 24%;
+        width: 100%;
+        height: var(--height);
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
+      }
+
+      .dialogue:not(.battle) {
+        background-image: url("https://dl.dropbox.com/s/o22816da9e7wpvq/dialogue.png?raw=1");
+      }
+
+      .dialogue.battle {
+        background-image: url("https://dl.dropbox.com/s/7dex5kr9coiodez/battledialogue.png?raw=1");
+        transform:  translateX(-50%) translateY(12%);
+      }
+
+      .dialogue > span {
+        display: block;
+        width: 100%;
+        height: 100%;
+        --font-size: calc(75vmin * 0.06);
+        --line-height: calc(75vmin * 0.06);
+        font-size: var(--font-size);
+        line-height: var(--line-height);
+        position: relative;
+        left: var(--font-size);
+        top: var(--line-height);
+      }
+
+      .dialogue.battle > span {
+        color: #fff;
+        left: calc(var(--font-size) / 1.5);
+      }
+
+      .dialogue.battle > span > .indicator {
+        display: inline-block;
+        position: relative;
+        background-image: url("https://dl.dropbox.com/s/balld36ulaeur12/indicator.png?raw=1");
+        width: calc(var(--font-size) * 0.5);
+        height: calc(var(--font-size) * 0.5);
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        animation: indicator 1s;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+      }
+
+      @keyframes indicator {
+        0% { transform: translateY(-0.25vmin); }
+        50% { transform: translateY(0.25vmin); }
+        100% { transform: translateY(-0.25vmin); }
+      }
+
+      .selectionmenu {
+        width: 50%;
+        height: calc(100% - 24%);
+        background-image: url("https://dl.dropbox.com/s/q1wm7krj6y18gtv/selectionmenu.png?raw=1");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+        position: absolute;
+        top: 50%;
+        right: 0;
+        transform: translateY(-50%);
+      }
+
+      .info {
+        width: var(--width);
+        height: var(--height);
+        position: absolute;
+      }
+
+      .info > .wrap {
+        width: 100%;
+        height: 100%;
+        --font-size: calc(75vmin / 2 / 10);
+        font-size: var(--font-size);
+        position: absolute;
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+
+      .info > .wrap > .healthbar {
+        display: inline-block;
+        height: 100%;
+        background: #70F8A8;
+        position: absolute;
+        bottom: 0;
+        opacity: 1;
+        z-index: -1;
+        transition-timing-function: linear;
+      }
+
+      .info > .wrap > .healthbar_bg {
+        display: inline-block;
+        height: 100%;
+        background: #506858;
+        position: absolute;
+        bottom: 0;
+        opacity: 1;
+        z-index: -1;
+      }
+
+      .info.you > .wrap > .name {
+        position: absolute;
+        top: calc(var(--font-size) / 6);
+        left: calc(var(--font-size) * 1.15);
+      }
+
+      .info.you > .wrap > .level {
+        position: absolute;
+        top: calc(var(--font-size) / 6);
+        right: calc(var(--font-size) * 0.55);
+        text-align: right;
+      }
+
+      .info.you > .wrap > .health {
+        position: absolute;
+        bottom: calc(var(--font-size) / 3.15);
+        right: calc(var(--font-size) * 0.65);
+        text-align: right;
+      }
+
+      .info.you > .wrap > .healthbar_bg {
+        width: 14vmin;
+        right: calc(var(--font-size) - 1.5vmin);
+      }
+
+      .info.you > .wrap > .healthbar {
+        width: 14vmin;
+        right: calc(var(--font-size) - 1.5vmin);
+      }
+
+      .info.foe > .wrap > .name {
+        position: absolute;
+        top: calc(var(--font-size) / 6);
+        left: calc(var(--font-size) * 0.5);
+      }
+
+      .info.foe > .wrap > .level {
+        position: absolute;
+        top: calc(var(--font-size) / 6);
+        right: calc(var(--font-size) * 1.05);
+        text-align: right;
+      }
+
+      .info.foe > .wrap > .healthbar_bg {
+        width: 15vmin;
+        right: calc(var(--font-size));
+        transition: all 0.5s;
+      }
+
+      .info.foe > .wrap > .healthbar {
+        width: 15vmin;
+        right: calc(var(--font-size));
+        transition: all 0.5s;
+      }
+
+      .info.foe > .wrap > .health {
+        display: none;
+      }
+
+      .info.you {
+        --width: calc(75vmin / 2.5);
+        --height: calc(var(--width) * 0.356);
+
+        bottom: calc(75vmin * 0.2);
+        right: calc(var(--height) / 3);
+      }
+
+      .info.you > .wrap {
+        background-image: url("https://dl.dropbox.com/s/8akzda7grvyx87i/you_info.png?raw=1");
+      }
+
+      .info.foe {
+        --width: calc(75vmin / 2.5);
+        --height: calc(var(--width) * 0.29);
+
+        top: calc(var(--height) / 2);
+        left: calc(var(--height) / 2);
+      }
+
+      .info.foe > .wrap {
+        background-image: url("https://dl.dropbox.com/s/guo4iqpe7zkva7n/foe_info.png?raw=1");
+      }
+
+      .pokemon {
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+
+      .pokemon > .hitmarker {
+        background-image: url("https://dl.dropbox.com/s/xoxyd0rkqmotgv8/hitmarker.png?raw=1");
+        width: 30%;
+        height: 30%;
+
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+
+        z-index: 99;
+
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+
+        opacity: 0;
+      }
+
+      .pokemon.you > .hitmarker {
+        bottom: 35%;
+      }
+
+      .pokemon.you.damaged ~ .info.you {
+        animation: takeDamageHealthbar 0.075s;
+        animation-iteration-count: 10;
+        animation-delay: 0.5s;
+        animation-timing-function: linear;
+      }
+      .pokemon.you.damaged {
+        animation: takeDamagePokemon 0.75s;
+        animation-delay: 0.5s;
+        animation-timing-function: linear;
+      }
+      .pokemon.foe.damaged ~ .info.foe {
+        animation: takeDamageHealthbar 0.075s;
+        animation-iteration-count: 10;
+        animation-delay: 0.5s;
+        animation-timing-function: linear;
+      }
+      .pokemon.foe.damaged > canvas {
+        animation: takeDamagePokemon 0.75s;
+        animation-delay: 0.5s;
+        animation-timing-function: linear;
+      }
+
+      .pokemon.you {
+        width: 55%;
+        height: 55%;
+
+        position: absolute;
+        left: 0;
+        bottom: -2vmin;
+      }
+
+      .pokemon.foe {
+        width: 45%;
+        height: 45%;
+
+        position: absolute;
+        right: 4.5%;
+        top: 4.5%;
+
+        background-size: 100%;
+      }
+
+      .pokemon.foe > canvas {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .moveselection {
+        width: 100%;
+        height: 100%;
+
+        position: absolute;
+        top: 0;
+
+        background-image: url("https://dl.dropbox.com/s/bvn2h1759549y42/moveselection.png?raw=1");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+
+      .moveselection > .moves {
+        height: 70%;
+        width: 63%;
+
+        position: absolute;
+        top: 15%;
+        left: 2%;
+      }
+
+      .moveselection > .moves > .move {
+        display: flex;
+        width: calc(50% - 6vmin);
+        height: 50%;
+        float: left;
+
+        font-size: 3.75vmin;
+        padding-left: 3vmin;
+
+        cursor: pointer;
+
+        justify-content: center;
+        flex-direction: column;
+      }
+
+      .moveselection > .moves > .arrow {
+        width: 3.25vmin;
+        height: 3.25vmin;
+        background-image: url("https://dl.dropbox.com/s/kzvfdy5i1d8k2c9/arrow.png?raw=1");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+
+        position: absolute;
+        transform: translate(0, -50%);
+      }
+      .arrow.topleft {
+        top: 25%;
+        left: 0;
+      }
+      .arrow.botleft {
+        top: 75%;
+        left: 0;
+      }
+      .arrow.topright {
+        top: 25%;
+        left: calc(50% - 3vmin);
+      }
+      .arrow.botright {
+        top: 75%;
+        left: calc(50% - 3vmin);
+      }
+
+      .moveselection > .moveinfo {
+        display: flex;
+        flex-direction: column;
+
+        height: 70%;
+        width: 20%;
+
+        position: absolute;
+        top: 15%;
+        right: 2%;
+      }
+
+      .moveselection > .moveinfo > .pp {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 50%;
+
+        font-size: 4.25vmin;
+
+        text-align: center;
+        align-content: center;
+        justify-content: center;
+
+        transform: translate(2vmin, 1vmin);
+      }
+
+      .moveselection > .moveinfo > .type {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+        height: 50%;
+
+        font-size: 4.25vmin;
+
+        text-align: left;
+        align-content: center;
+        justify-content: center;
+
+        transform: translate(1.15vmin, -0.25vmin);
+      }
+
+      @keyframes faint_foe {
+        0% { transform: translate(-50%, 0); }
+        100% { transform: translate(-50%, 150%); }
+      }
+      .pokemon.foe.fainted > canvas {
+        animation: faint_foe 1s;
+        animation-delay: 1s;
+        animation-fill-mode: forwards;
+        animation-timing-function: linear;
+      }
+
+      @keyframes faint_you {
+        0% { transform: translateY(0); }
+        100% { transform: translateY(150%); }
+      }
+      .pokemon.you.fainted {
+        animation: faint_you 1s;
+        animation-delay: 1s;
+        animation-fill-mode: forwards;
+        animation-timing-function: linear;
+      }
+
+      @keyframes takeDamagePokemon {
+        0% { opacity: 1; }
+        12.5% { opacity: 0; }
+        25% { opacity: 1; }
+        37.5% { opacity: 0; }
+        50% { opacity: 1; }
+        62.5% { opacity: 0; }
+        75% { opacity: 1; }
+        87.5% { opacity: 0; }
+        100% { opacity: 1; }
+      }
+      @keyframes takeDamageHealthbar {
+        0% { transform: translateY(0.5vmin); }
+        100% { transform: translateY(0); }
+      }
+      @keyframes shaking {
+        0% { transform: translateX(0); }
+        23% { transform: translateX(0); }
+        33% { transform: translateX(3vmin); }
+        43% { transform: translateX(0); }
+        56% { transform: translateX(0); }
+        66% { transform: translateX(3vmin); }
+        76% { transform: translateX(0); }
+        100% { transform: translateX(0); }
+      }
+      .pokemon.shaking {
+        animation: shaking;
+        animation-duration: 0.33s;
+        animation-timing-function: linear;
+      }
+
+      @keyframes hitmarkerFade {
+        0% { opacity: 1; }
+        100% { opacity: 0; }
+      }
+      .pokemon.showHitmarker > .hitmarker {
+        animation: hitmarkerFade 0.5s;
+        animation-delay: 0s;
+        animation-timing-function: linear;
+      }
+
+      @keyframes tackle_you {
+        0% { transform: translateX(0); }
+        35% { transform: translateX(0); }
+        50% { transform: translateX(5vmin); }
+        65% { transform: translateX(0); }
+        100% { transform: translateX(0); }
+      }
+      .pokemon.you.tackle {
+        animation: tackle_you;
+        animation-duration: 0.75s;
+        animation-timing-function: linear;
+      }
+
+      @keyframes tackle_foe {
+        0% { transform: translateX(0); }
+        35% { transform: translateX(0); }
+        50% { transform: translateX(-5vmin); }
+        65% { transform: translateX(0); }
+        100% { transform: translateX(0); }
+      }
+      .pokemon.foe.tackle {
+        animation: tackle_foe;
+        animation-duration: 0.75s;
+        animation-timing-function: linear;
+      }
+
+      @keyframes splash {
+        0% { transform: translateY(0) scaleY(1); }
+        12.5% { transform: translateY(3vmin) scaleY(0.9); }
+        25% { transform: translateY(-1vmin) scaleY(1.1); }
+        37.5% { transform: translateY(3vmin) scaleY(0.9); }
+        50% { transform: translateY(-1vmin) scaleY(1.1); }
+        62.5% { transform: translateY(3vmin) scaleY(0.9); }
+        75% { transform: translateY(-1vmin) scaleY(1.1); }
+        87.5% { transform: translateY(0) scaleY(1); }
+      }
+      .pokemon.splash {
+        animation: splash;
+        animation-duration: 2s;
+        animation-timing-function: linear;
+      }
+
+      /* --- CSS untuk MENU PEMILIHAN --- */
+      .pokemon-selection-menu {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #222; /* Latar belakang gelap */
+        z-index: 1000; /* Pastikan di atas elemen lain */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        font-family: "VT323";
+        text-shadow: 0.25vmin 0.25vmin #878787;
+        font-size: 5vmin;
+        display: none; /* Awalnya disembunyikan, akan ditampilkan oleh JS */
+      }
+
+      .pokemon-selection-menu h2 {
+        font-size: 6vmin;
+        margin-bottom: 3vmin;
+        text-align: center;
+      }
+
+      .pokemon-list {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2vmin; /* Jarak antar pokemon */
+        width: 80%;
+        max-height: 70%;
+        overflow-y: auto; /* Jika terlalu banyak pokemon, bisa discroll */
+        padding: 2vmin;
+        background-color: rgba(0,0,0,0.5);
+        border-radius: 1vmin;
+        border: 0.5vmin solid #555;
+      }
+
+      .pokemon-choice {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #444;
+        border: 0.25vmin solid #777;
+        border-radius: 0.5vmin;
+        padding: 1.5vmin;
+        cursor: pointer;
+        transition: background-color 0.2s, transform 0.2s;
+      }
+
+      .pokemon-choice:hover {
+        background-color: #666;
+        transform: scale(1.05);
+      }
+
+      .pokemon-choice.selected {
+          background-color: #007bff; /* Warna biru saat terpilih */
+          border-color: #0056b3;
+      }
+
+      .pokemon-choice img {
+        width: 12vmin; /* Ukuran sprite */
+        height: 12vmin;
+        -ms-interpolation-mode: nearest-neighbor;
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -o-pixelated;
+        image-rendering: pixelated;
+      }
+
+      .pokemon-choice span {
+        margin-top: 1vmin;
+        font-size: 3vmin;
+        color: #fff;
+      }
+
+      .start-battle-button {
+        margin-top: 4vmin;
+        padding: 2vmin 4vmin;
+        font-size: 4vmin;
+        background-color: #28a745; /* Warna hijau */
+        color: white;
+        border: none;
+        border-radius: 1vmin;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .start-battle-button:hover {
+        background-color: #218838;
+      }
+
+      /* --- CSS untuk Pilihan Setelah Pertandingan --- */
+      .end-battle-options {
+        position: absolute;
+        bottom: 5vmin; /* Di atas dialog */
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        gap: 2vmin;
+        z-index: 100; /* Pastikan di atas elemen lain */
+        display: none; /* Awalnya disembunyikan */
+      }
+
+      .end-battle-options button {
+        padding: 1.5vmin 3vmin;
+        font-size: 3.5vmin;
+        font-family: "VT323";
+        border: none;
+        border-radius: 1vmin;
+        cursor: pointer;
+        color: white;
+        text-shadow: 0.25vmin 0.25vmin #878787;
+        transition: background-color 0.2s, transform 0.2s;
+      }
+
+      .end-battle-options button:hover {
+        transform: scale(1.05);
+      }
+
+      .end-battle-options .btn-new-foe {
+        background-color: #007bff; /* Biru */
+      }
+      .end-battle-options .btn-new-foe:hover {
+        background-color: #0056b3;
+      }
+
+      .end-battle-options .btn-return-selection {
+        background-color: #dc3545; /* Merah */
+      }
+      .end-battle-options .btn-return-selection:hover {
+        background-color: #bd2130;
+      }
+
+    </style>
+  </head>
+  <body>
+
+    <div class="wrapper">
+      <div class="opening"></div>
+
+      <div class="pokemon-selection-menu">
+        <h2>CHOOSE YOUR POKÉMON!</h2>
+        <div class="pokemon-list">
+          </div>
+        <button class="start-battle-button" disabled>START BATTLE</button>
+      </div>
+      <div class="pokemon you"><div class="hitmarker"></div></div>
+      <div class="pokemon foe"><div class="hitmarker"></div><canvas></canvas></div>
+
+      <div class="dialogue battle" onclick="NEXT()">
+        <span></span>
+
+        <div class="selectionmenu"></div>
+        <div class="moveselection">
+          <div class="moves">
+            <div class="arrow topleft"></div>
+            <div class="move tackle" id="0" onclick="selectMove(this)">TACKLE</div>
+            <div class="move splash" id="1" onclick="selectMove(this)">SPLASH</div>
+            <div class="move doubleslap" id="2" onclick="selectMove(this)">DOUBLESLAP</div>
+            <div class="move" id="3" onclick="selectMove(this)">-</div>
+          </div>
+          <div class="moveinfo">
+            <div class="pp">35/35</div>
+            <div class="type">NORMAL</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info foe">
+        <div class="wrap">
+          <span class="name name2"></span>
+          <span class="level">Lv5</span>
+          <span class="health">25/25</span>
+          <span class="healthbar_bg"></span>
+          <span class="healthbar"></span>
+        </div>
+      </div>
+      <div class="info you">
+        <div class="wrap">
+          <span class="name name1"></span>
+          <span class="level">Lv20000</span>
+          <span class="health">10000/10000</span>
+          <span class="healthbar_bg"></span>
+          <span class="healthbar"></span>
+        </div>
+      </div>
+
+      <div class="end-battle-options">
+          <button class="btn-new-foe" onclick="fightNewFoe()">FIGHT NEW FOE!</button>
+          <button class="btn-return-selection" onclick="returnToSelection()">RETURN TO SELECTION!</button>
+      </div>
+      </div>
+    <script>
+      // Created by Nethmi Pallekankanamge & The Coding Sloth
+
+      "use strict";
+
+      /*
+            GEN         RANGE
+        1. Kanto      [  0 ... 151] no problems
+        2. Johto      [152 ... 251] no problems
+        3. Hoenn      [252 ... 386] no problems
+        4. Sinnoh     [387 ... 493] no problems
+        5. Unova      [494 ... 649] no problems
+        6. Kalos      [650 ... 721] not all the sprites
+        7. Alola      [722 ... 807] not all the sprites
+      */
+
+      // These settings will result in Pokémon ranging from gen 1 to 5
+      // (as seen in the table above).
+      var min = 0;
+      var max = 649;
+
+      var pokemon_player; // Akan ditentukan oleh pemilihan pengguna
+      var pokemon_foe = Math.floor(Math.random() * (max - min + 1)) + min;
+
+      var player = { sprites: {} },
+          foe = { sprites: {} },
+          health_player,
+          health_foe;
+      var foeMoves = [tackle, tackle, splash, doubleslap, doubleslap];
+      var exceptions = ["ho-oh", "porygon-z", "jangmo-o", "hakamo-o", "kommo-o", "nidoran-m", "nidoran-f", "mr-mime", "type-null", "tapu-koko", "tapu-lele", "tapu-bulu", "tapu-fini"];
+
+      var changes = {
+        "farfetchd": "Farfetch'd",
+        "mr-mime": "Mr. Mime",
+        "type-null": "Type: Null",
+        "tapu-koko": "Tapu Koko",
+        "tapu-lele": "Tapu Lele",
+        "tapu-bulu": "Tapu Bulu",
+        "tapu-fini": "Tapu Fini",
+        // Tambahkan Pokémon baru yang mungkin muncul di API
+        "charizard": "Charizard", // Menambahkan Charizard agar namanya benar jika dipilih
+        "pikachu": "Pikachu",
+        "bulbasaur": "Bulbasaur",
+        "charmander": "Charmander",
+        "squirtle": "Squirtle",
+        "eevee": "Eevee",
+        "snorlax": "Snorlax",
+        "dragonite": "Dragonite",
+        "zweilous": "Zweilous", // Berdasarkan gambar, jika muncul
+        "gulpin": "Gulpin" // Berdasarkan gambar, jika muncul
+      };
+
+      var moves = {
+        "tackle": tackle,
+        "splash": splash,
+        "doubleslap": doubleslap
+      };
+      var pp = [35, 40, 10]; // Initial PP values
+      var selectedMove = "tackle";
+
+      // --- VARIABEL UNTUK PEMILIHAN POKEMON ---
+      var selectedPlayerPokemonId = null;
+      var selectablePokemonIds = [1, 4, 7, 25, 6, 133, 143, 149]; // Bulbasaur, Charmander, Squirtle, Pikachu, Charizard, Eevee, Snorlax, Dragonite
+
+      // Global variables for timers to be cleared
+      var textInterval;
+      var attack;
+      var slapInterval;
+      var taker; // Make taker global for slap function consistency
+
+      // --- AKHIR VARIABEL ---
+
+      onload = function onload() {
+        document.querySelector(".opening").classList.remove("start");
+
+        // Sembunyikan elemen game utama terlebih dahulu
+        document.querySelector(".pokemon.you").style.display = 'none';
+        document.querySelector(".pokemon.foe").style.display = 'none';
+        document.querySelector(".dialogue").style.display = 'none';
+        document.querySelector(".info.foe").style.display = 'none';
+        document.querySelector(".info.you").style.display = 'none';
+        document.querySelector(".moveselection").style.display = 'none'; // Sembunyikan menu move juga
+        document.querySelector(".end-battle-options").style.display = 'none'; // Sembunyikan tombol pilihan akhir
+
+        // Tampilkan menu pemilihan Pokémon
+        document.querySelector(".pokemon-selection-menu").style.display = 'flex';
+        loadSelectablePokemon();
+      };
+
+      function loadSelectablePokemon() {
+          const pokemonListDiv = document.querySelector(".pokemon-list");
+          pokemonListDiv.innerHTML = '';
+
+          let loadedCount = 0;
+          const totalToLoad = selectablePokemonIds.length;
+
+          // Start with loading screen active
+          document.querySelector(".opening").classList.remove("start");
+
+          selectablePokemonIds.forEach(id => {
+              fetch(`https://pokeapi.co/api/v2/pokemon/${id}`)
+                  .then(res => res.json())
+                  .then(data => {
+                      const pokemonName = changes[data.name] || data.name.split("-")[0];
+                      // Use back_default for player selection for consistency, or front_default as fallback
+                      const pokemonSprite = data.sprites.front_default || data.sprites.back_default;
+
+                      if (pokemonSprite) {
+                          const choiceDiv = document.createElement('div');
+                          choiceDiv.classList.add('pokemon-choice');
+                          choiceDiv.setAttribute('data-pokemon-id', data.id);
+                          choiceDiv.onclick = () => selectPlayerPokemon(choiceDiv, data.id);
+
+                          const img = document.createElement('img');
+                          img.src = pokemonSprite;
+                          img.alt = pokemonName.toUpperCase();
+
+                          const span = document.createElement('span');
+                          span.textContent = pokemonName.toUpperCase();
+
+                          choiceDiv.appendChild(img);
+                          choiceDiv.appendChild(span);
+                          pokemonListDiv.appendChild(choiceDiv);
+                      } else {
+                          console.warn(`Sprite for Pokémon ID ${id} (${pokemonName}) not found.`);
+                      }
+                      loadedCount++;
+                      if (loadedCount === totalToLoad) {
+                          // Once all selectable Pokémon are loaded, hide loading screen
+                          document.querySelector(".opening").classList.add("start");
+                      }
+                  })
+                  .catch(error => {
+                      console.error(`Error fetching selectable Pokémon ID ${id}:`, error);
+                      loadedCount++;
+                      if (loadedCount === totalToLoad) {
+                          document.querySelector(".opening").classList.add("start");
+                      }
+                  });
+          });
+
+          document.querySelector(".start-battle-button").onclick = startBattle;
+      }
+
+      function selectPlayerPokemon(element, id) {
+          document.querySelectorAll('.pokemon-choice').forEach(choice => {
+              choice.classList.remove('selected');
+          });
+
+          element.classList.add('selected');
+          selectedPlayerPokemonId = id;
+          document.querySelector(".start-battle-button").disabled = false;
+      }
+
+      function startBattle() {
+          if (selectedPlayerPokemonId === null) {
+              alert("Please select your Pokémon first!");
+              return;
+          }
+
+          document.querySelector(".pokemon-selection-menu").style.display = 'none';
+          document.querySelector(".end-battle-options").style.display = 'none'; // Sembunyikan tombol pilihan akhir
+
+          document.querySelector(".pokemon.you").style.display = 'block';
+          document.querySelector(".pokemon.foe").style.display = 'block';
+          document.querySelector(".dialogue").style.display = 'block';
+          document.querySelector(".info.foe").style.display = 'block';
+          document.querySelector(".info.you").style.display = 'block';
+          document.querySelector(".moveselection").style.display = 'block'; // Pastikan menu move ditampilkan di awal
+
+          pokemon_player = selectedPlayerPokemonId;
+
+          // Reset health bar pemain
+          document.querySelector(".info.you > .wrap > .healthbar").style.width = "14vmin"; // Lebar penuh
+          document.querySelector(".info.you > .wrap > .health").innerHTML = "10000/10000";
+          health_player = 10000; // Reset nilai kesehatan pemain
+
+          // Reset health bar lawan ke kondisi awal
+          document.querySelector(".info.foe > .wrap > .healthbar").style.width = "15vmin"; // Lebar penuh
+          document.querySelector(".info.foe > .wrap > .health").innerHTML = "25/25";
+          health_foe = 25; // Reset nilai kesehatan lawan
+
+          // Reset PP moves
+          pp = [35, 40, 10]; // Reset ke nilai awal
+          document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[0] + "/35"; // Update tampilan PP
+          selectedMove = "tackle"; // Reset move yang terpilih secara default
+
+          // Hentikan dan bersihkan semua timer yang mungkin aktif dari game sebelumnya
+          clearInterval(textInterval);
+          clearTimeout(attack);
+          clearInterval(slapInterval);
+          textInterval = undefined;
+          attack = undefined;
+          slapInterval = undefined;
+          
+          // Reset status game
+          attacking = false; // <<< KRITIS: Membuat game menunggu input pemain
+          taker = undefined; // Reset taker variable
+
+          // Hapus kelas animasi dari kedua pokemon
+          document.querySelector(".pokemon.you").classList.remove("fainted", "tackle", "splash", "shaking", "damaged", "showHitmarker");
+          document.querySelector(".pokemon.foe").classList.remove("fainted", "tackle", "splash", "shaking", "damaged", "showHitmarker");
+
+
+          fetch("https://pokeapi.co/api/v2/pokemon/" + pokemon_player).then(function (x) {
+              return x.json();
+          }).then(function (x) {
+              if (exceptions.indexOf(x.name) == -1) x.name = x.name.split("-")[0];
+              if (!!changes[x.name]) x.name = changes[x.name];
+              var name1 = document.getElementsByClassName("name1");
+              for (var i = 0; i < name1.length; i++) {
+                  name1[i].innerHTML = x.name.toUpperCase();
+              }
+
+              // Use back_default for player's pokemon sprite
+              if (x.sprites.back_default == null) {
+                  alert("\n            There is no back sprite available for this Pokémon,\n            please report the id or name in the comments\n             \nID: " + x.id + "\nNAME: " + x.name + "\nSIDE: back");
+                  // Fallback to front_default if back sprite is missing, or a placeholder
+                  document.querySelector(".pokemon.you").style.backgroundImage = "url('" + (x.sprites.front_default || 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/0.png') + "')";
+              } else {
+                document.querySelector(".pokemon.you").style.backgroundImage = "url('" + x.sprites.back_default + "')";
+              }
+              player = x;
+
+              loadFoe(); // Muat Pokémon lawan
+              say("What will<br/>" + player.name.toUpperCase() + " do? @"); // Tampilkan dialog awal
+          }).catch(error => {
+              console.error("Error loading player Pokémon:", error);
+              alert("Failed to load your Pokémon. Please try again.");
+              returnToSelection(); // Go back to selection if player Pokémon fails to load
+          });
+      }
+
+      function loadFoe(again = false) {
+        if (again) pokemon_foe = Math.floor(Math.random() * (max - min + 1)) + min;
+
+        // Reset tampilan Pokémon lawan sebelum memuat yang baru
+        document.querySelector(".pokemon.foe").classList.remove("fainted", "tackle", "splash", "shaking", "damaged", "showHitmarker"); // Hapus semua kelas animasi
+        document.querySelector(".info.foe > .wrap > .healthbar").style.width = "15vmin"; // Lebar penuh
+        document.querySelector(".info.foe > .wrap > .healthbar").style.right = "var(--font-size)";
+        document.querySelector(".info.foe > .wrap > .health").innerHTML = "25/25"; // Reset teks health
+
+        health_foe = parseInt(document.querySelector(".info.foe > .wrap > .health").innerHTML.split("/")[1]);
+
+        fetch("https://pokeapi.co/api/v2/pokemon/" + pokemon_foe).then(function (x) {
+          return x.json();
+        }).then(function (x) {
+          if (exceptions.indexOf(x.name) == -1) x.name = x.name.split("-")[0];
+          if (!!changes[x.name]) x.name = changes[x.name];
+          var name2 = document.getElementsByClassName("name2");
+          for (var i = 0; i < name2.length; i++) {
+            name2[i].innerHTML = x.name.toUpperCase();
+          }
+
+          if (x.sprites.front_default == null) {
+            alert("\n            There is no front sprite available for this Pokémon,\n            please report the id or name in the comments\n             \nID: " + x.id + "\nNAME: " + x.name + "\nSIDE: front");
+            // Fallback to back_default if front sprite is missing, or a placeholder
+            document.querySelector(".pokemon.foe > canvas").style.display = 'none'; // Hide canvas if no sprite
+            // You might want to set a background-image directly on .pokemon.foe here if canvas is not used
+          } else {
+            document.querySelector(".pokemon.foe > canvas").style.display = 'block'; // Ensure canvas is visible
+            var sprite = new Image();
+            sprite.src = x.sprites.front_default;
+            sprite.crossOrigin = "Anonymous";
+
+            sprite.onload = function () {
+              var canvas = document.querySelector(".pokemon.foe > canvas"); // Pastikan menargetkan canvas lawan
+              canvas.style.width = "100%";
+              canvas.style.height = "100%";
+              canvas.width = canvas.offsetWidth;
+              canvas.height = canvas.offsetHeight;
+
+              var ctx = canvas.getContext("2d");
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              ctx.imageSmoothingEnabled = false;
+              ctx.drawImage(sprite, 0, 0, canvas.width, canvas.height);
+
+              trimCanvas(ctx);
+
+              canvas.style.width = "";
+              canvas.style.height = "";
+
+              foe = x;
+            };
+          }
+        }).catch(error => {
+            console.error("Error loading foe Pokémon:", error);
+            alert("Failed to load wild Pokémon. Starting new battle with a different one.");
+            loadFoe(true); // Try loading another foe if this one fails
+        });
+      }
+
+      var textSpeed = 25;
+      function say(string) {
+        clearInterval(textInterval); // Clear any previous interval
+        var array = string;
+        array = array.split("<br/>").join("|");
+        array = array.split("");
+        var dialogue = document.querySelector(".dialogue > span");
+        dialogue.innerHTML = "";
+        var index = 0;
+
+        textInterval = setInterval(function () { // Assign to global variable
+          if (array[index] == "|") dialogue.innerHTML += "<br/>";
+          else if (array[index] == "@") dialogue.innerHTML += "<span class='indicator'></span>";
+          else dialogue.innerHTML += array[index];
+
+          index++;
+          if (index >= array.length) clearInterval(textInterval);
+        }, textSpeed);
+      }
+
+      var attacking = false; // Kritis: Harus false saat menunggu input pemain
+
+      function selectMove(elem) {
+        if (!player.name || !foe.name || attacking === true) return; // Prevent selection if an attack is in progress
+
+        // Check if player's pokemon is fainted
+        if (health_player <= 0) {
+            say(player.name.toUpperCase() + " has fainted! @");
+            return;
+        }
+
+        var move = elem.classList[1]; // Get move name from second class
+        if (move == '-') return; // Do nothing if move slot is empty
+
+        // Logic for "double tap" to confirm move
+        if (selectedMove != move) {
+            selectedMove = move; // Select the move
+        } else {
+            // Move confirmed, attempt to attack
+            // Check PP before attacking
+            let moveIndex;
+            switch(selectedMove) {
+                case "tackle": moveIndex = 0; break;
+                case "splash": moveIndex = 1; break;
+                case "doubleslap": moveIndex = 2; break;
+                default: return; // Should not happen
+            }
+
+            if (pp[moveIndex] == 0) {
+                say("Not enough PP for " + selectedMove.toUpperCase() + "! @");
+                return; // Prevent attack if no PP
+            }
+
+            document.querySelector(".moveselection").style.display = "none";
+            ATTACK(); // Proceed with attack
+        }
+
+        // Update UI for selected move (arrow, PP, type)
+        var a = document.querySelector(".moveselection > .moves > .arrow");
+        var t = document.querySelector(".moveselection > .moveinfo > .type");
+        var p = document.querySelector(".moveselection > .moveinfo > .pp");
+        switch (elem.id) {
+          case "0": // Tackle
+            a.classList.add("topleft");
+            a.classList.remove("botleft", "topright", "botright");
+            t.innerHTML = "NORMAL";
+            p.innerHTML = pp[0] + "/35";
+            break;
+          case "1": // Splash
+            a.classList.remove("topleft", "botleft", "botright");
+            a.classList.add("topright");
+            t.innerHTML = "WATER";
+            p.innerHTML = pp[1] + "/40";
+            break;
+          case "2": // Doubleslap
+            a.classList.remove("topleft", "topright", "botright");
+            a.classList.add("botleft");
+            t.innerHTML = "NORMAL";
+            p.innerHTML = pp[2] + "/10";
+            break;
+          case "3": // Empty move
+            a.classList.remove("topleft", "botleft", "topright");
+            a.classList.add("botright");
+            t.innerHTML = "-";
+            p.innerHTML = "-/-";
+            break;
+        }
+      }
+
+      function ATTACK() {
+        if (health_player <= 0 || health_foe <= 0) return; // Prevent attack if someone fainted
+
+        if (attacking === false) { // Only allow player to initiate attack if it's their turn
+          moves[selectedMove]("you");
+          document.querySelector(".selectionmenu").style.display = "none";
+          attacking = "you"; // Set attacking state
+        }
+      }
+
+      function NEXT() {
+        // Only proceed if a battle state is waiting for a click (attack is 99)
+        // and if it's not currently processing an attack (attacking is not false)
+        if (attacking !== false && attack == 99) {
+            if (attacking == "you") { // Player just attacked, now foe's turn
+                // Check if foe fainted before foe attacks
+                if (health_foe <= 0) {
+                    // Foe already fainted, proceed to end battle options
+                    endBattleOptions();
+                    return; // Exit NEXT()
+                }
+
+                say("Wild " + foe.name.toUpperCase() + " is attacking! @"); // Foe attack message
+                setTimeout(function () {
+                    foeMoves[Math.floor(Math.random() * foeMoves.length)]("foe");
+                }, 1500); // Give time for text to display
+                attacking = "foe";
+                attack = 90; // Set a temporary value to indicate foe's attack is pending
+            } else if (attacking == "foe") { // Foe just attacked, now player's turn
+                // Check if player fainted before player's turn
+                if (health_player <= 0) {
+                    say(player.name.toUpperCase() + " fainted!");
+                    document.querySelector(".pokemon.you").classList.add("fainted");
+                    setTimeout(function() {
+                        alert("Your Pokémon fainted! Game over.");
+                        returnToSelection(); // Kembali ke menu pemilihan setelah fainted
+                    }, 2000); // Give time for faint animation
+                    return; // Exit NEXT()
+                }
+
+                say("What will<br/>" + player.name.toUpperCase() + " do? @");
+                document.querySelector(".moveselection").style.display = "block";
+                attacking = false; // Player's turn to choose move
+                selectedMove = "tackle"; // Reset selected move for new turn
+                document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[0] + "/35"; // Reset PP display to Tackle
+                document.querySelector(".moveselection > .moves > .arrow").classList.remove("botleft", "topright", "botright");
+                document.querySelector(".moveselection > .moves > .arrow").classList.add("topleft"); // Reset arrow
+                document.querySelector(".moveselection > .moveinfo > .type").innerHTML = "NORMAL";
+            }
+        }
+      }
+
+      function tackle(dealer) {
+        let moveIndex = 0; // Tackle is at index 0 in pp array
+        if (dealer == "you") {
+            if (pp[moveIndex] == 0) {
+                say("Not enough PP for TACKLE! @");
+                attacking = false;
+                document.querySelector(".moveselection").style.display = "block";
+                return;
+            }
+            pp[moveIndex]--;
+            document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[moveIndex] + "/35";
+        }
+
+        taker = dealer == "you" ? "foe" : "you";
+        if (dealer == "you") say(player.name.toUpperCase() + " used<br/>TACKLE! @");
+        else say("Wild " + foe.name.toUpperCase() + " used<br/>TACKLE! @");
+
+        attack = setTimeout(function () {
+          document.querySelector(".pokemon." + dealer).classList.add("tackle");
+          setTimeout(function () {
+            document.querySelector(".pokemon." + dealer).classList.remove("tackle");
+            takeDamage(taker, true, true, 0); // Damage applies instantly after animation
+            if (slapInterval) clearInterval(slapInterval); // Ensure slapInterval is cleared
+            attack = 99; // Signal that attack is complete, ready for NEXT()
+          }, 800);
+        }, 1000);
+      }
+
+      function splash(dealer) {
+        let moveIndex = 1; // Splash is at index 1 in pp array
+        if (dealer == "you") {
+            if (pp[moveIndex] == 0) {
+                say("Not enough PP for SPLASH! @");
+                attacking = false;
+                document.querySelector(".moveselection").style.display = "block";
+                return;
+            }
+            pp[moveIndex]--;
+            document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[moveIndex] + "/40";
+        }
+
+        taker = dealer == "you" ? "foe" : "you";
+        if (dealer == "you") say(player.name.toUpperCase() + " used<br/>SPLASH! @");
+        else say("Wild " + foe.name.toUpperCase() + " used<br/>SPLASH! @");
+
+        attack = setTimeout(function () {
+          document.querySelector(".pokemon." + dealer).classList.add("splash");
+          setTimeout(function () {
+            document.querySelector(".pokemon." + dealer).classList.remove("splash");
+            say("But nothing happened! @");
+            if (slapInterval) clearInterval(slapInterval); // Ensure slapInterval is cleared
+            attack = 99;
+          }, 2050);
+        }, 1000);
+      }
+
+      var slapCount;
+      var slaps;
+      function doubleslap(dealer) {
+        let moveIndex = 2; // Doubleslap is at index 2 in pp array
+        if (dealer == "you") {
+            if (pp[moveIndex] == 0) {
+                say("Not enough PP for DOUBLESLAP! @");
+                attacking = false;
+                document.querySelector(".moveselection").style.display = "block";
+                return;
+            }
+            pp[moveIndex]--;
+            document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[moveIndex] + "/10";
+        }
+
+        taker = dealer == "you" ? "foe" : "you";
+        if (dealer == "you") say(player.name.toUpperCase() + " used<br/>DOUBLESLAP! @");
+        else say("Wild " + foe.name.toUpperCase() + " used<br/>DOUBLESLAP! @");
+
+        slapCount = 0;
+        slaps = Math.floor(Math.random() * 4) + 1; // At least 1 slap, up to 5 slaps (0-4 + 1)
+
+        attack = setTimeout(function () {
+          // Initial slap immediately
+          takeDamage(taker, true, true, 1); // Delay for this initial damage application
+          slapCount++;
+
+          if (slapCount >= slaps) { // If only 1 slap was chosen
+              say("Hit " + slapCount + " time(s)! @");
+              attack = 99;
+          } else {
+              slapInterval = setInterval(function() {
+                  if (slapCount < slaps) {
+                      takeDamage(taker, true, true, 1);
+                      slapCount++;
+                  } else {
+                      clearInterval(slapInterval);
+                      slapInterval = undefined;
+                      say("Hit " + slapCount + " time(s)! @");
+                      attack = 99;
+                  }
+              }, 1500); // Interval between subsequent slaps
+          }
+        }, 1000); // Initial delay before first slap
+      }
+
+      function takeDamage(taker, shaking, hitmarker, timeout) {
+        setTimeout(function () {
+          if (shaking) {
+            document.querySelector(".pokemon." + taker).classList.add("shaking");
+            setTimeout(function () {
+              document.querySelector(".pokemon." + taker).classList.remove("shaking");
+            }, 340);
+          }
+          if (hitmarker) { // Changed shaking to hitmarker to match function parameter
+            document.querySelector(".pokemon." + taker).classList.add("showHitmarker");
+            setTimeout(function () {
+              document.querySelector(".pokemon." + taker).classList.remove("showHitmarker");
+            }, 550);
+          }
+          document.querySelector(".pokemon." + taker).classList.add("damaged");
+          setTimeout(function () {
+            document.querySelector(".pokemon." + taker).classList.remove("damaged");
+
+            // A simpler damage calculation, you can make this more complex based on stats
+            var damage = 5; // Base damage
+            var critical = Math.random() < 0.125;
+            if (critical) {
+                damage = Math.round(damage * 1.5); // Critical hit bonus, rounded
+                if (taker == "you") say("A critical hit on your " + player.name.toUpperCase() + "! @");
+                else say("A critical hit on wild " + foe.name.toUpperCase() + "! @");
+            }
+
+            if (taker == "foe") {
+              health_foe -= damage;
+              healthTo(Math.round(health_foe), "foe", critical);
+            } else {
+              health_player -= damage;
+              healthTo(Math.round(health_player), "you", critical);
+            }
+          }, 800);
+        }, timeout);
+      }
+
+      function healthTo(target, taker, crit) {
+        var interval;
+        if (taker == "you") {
+          var healthElement = document.querySelector(".info.you > .wrap > .health");
+          var currentDisplayHealth = parseInt(healthElement.innerHTML.split("/")[0]);
+          var maxHealth = parseInt(healthElement.innerHTML.split("/")[1]);
+
+          target = Math.max(0, target); // Ensure target doesn't go below 0
+
+          if (currentDisplayHealth == target) { // If already at target health, do nothing or just check fainted status
+              if (target <= 0) {
+                  healthElement.innerHTML = "0/" + maxHealth;
+                  say(player.name.toUpperCase() + " fainted!");
+                  document.querySelector(".pokemon.you").classList.add("fainted");
+                  setTimeout(function() {
+                    alert("Your Pokémon fainted! Game over.");
+                    returnToSelection(); // Kembali ke menu pemilihan setelah fainted
+                  }, 2000); // Give time for faint animation
+              } else {
+                  attack = 99; // If health didn't change, ready for next click (e.g. splash effect)
+              }
+              return;
+          }
+
+          var healthDecrement = (currentDisplayHealth - target) / 10; // Divide into 10 steps for smooth animation
+          var step = 0;
+          interval = setInterval(function () {
+            step++;
+            currentDisplayHealth -= healthDecrement;
+            if ((healthDecrement > 0 && currentDisplayHealth <= target) || (healthDecrement < 0 && currentDisplayHealth >= target) || step >= 10) {
+                currentDisplayHealth = target; // Ensure it settles at the exact target
+                clearInterval(interval);
+                interval = undefined; // Clear interval variable
+
+                if (target <= 0) {
+                    healthElement.innerHTML = "0/" + maxHealth;
+                    say(player.name.toUpperCase() + " fainted!");
+                    document.querySelector(".pokemon.you").classList.add("fainted");
+                    setTimeout(function() {
+                      alert("Your Pokémon fainted! Game over.");
+                      returnToSelection(); // Kembali ke menu pemilihan setelah fainted
+                    }, 2000); // Give time for faint animation
+                    return; // Stop processing further for this player's health
+                }
+                 attack = 99; // Ready for NEXT() after animation
+            }
+
+            healthElement.innerHTML = Math.round(currentDisplayHealth) + "/" + maxHealth;
+          }, 100);
+
+          var bar = document.querySelector(".info.you > .wrap > .healthbar");
+          var healthFraction = target / maxHealth;
+          bar.style.transition = "width 1s linear"; // Smooth transition for health bar
+          bar.style.width = "calc(14vmin * " + healthFraction + ")";
+        } else { // Taker is Foe
+          var healthElement = document.querySelector(".info.foe > .wrap > .health");
+          var maxHealth = parseInt(healthElement.innerHTML.split("/")[1]);
+
+          target = Math.max(0, target); // Ensure target doesn't go below 0
+
+          document.querySelector(".info.foe > .wrap > .healthbar").style.transition = "width 1s linear"; // Smooth transition for health bar
+          document.querySelector(".info.foe > .wrap > .healthbar").style.width = "calc(15vmin * " + target / maxHealth + ")";
+          healthElement.innerHTML = target + "/" + maxHealth; // Update text immediately for foe, or animate if desired
+
+          if (target <= 0) {
+            healthElement.innerHTML = "0/" + maxHealth; // Update health display immediately for foe
+            say("Wild " + foe.name.toUpperCase() + " fainted! @");
+
+            document.querySelector(".pokemon.foe").classList.add("fainted");
+
+            // --- Panggil fungsi untuk menampilkan pilihan setelah lawan pingsan ---
+            setTimeout(function() {
+                endBattleOptions();
+            }, 3500); // Give time for faint animation
+            return;
+          } else {
+             attack = 99; // Foe took damage but didn't faint, ready for NEXT()
+          }
+        }
+      }
+
+
+      // --- FUNGSI BARU UNTUK PILIHAN SETELAH PERTANDINGAN ---
+      function endBattleOptions() {
+          document.querySelector(".dialogue").style.display = 'none'; // Sembunyikan dialog
+          document.querySelector(".moveselection").style.display = 'none'; // Sembunyikan menu move
+          document.querySelector(".end-battle-options").style.display = 'flex'; // Tampilkan tombol
+          // Clear any active timers to prevent unexpected behavior
+          clearInterval(textInterval);
+          clearTimeout(attack);
+          clearInterval(slapInterval);
+          textInterval = undefined;
+          attack = undefined;
+          slapInterval = undefined;
+      }
+
+      function fightNewFoe() {
+          document.querySelector(".end-battle-options").style.display = 'none'; // Sembunyikan tombol
+          document.querySelector(".dialogue").style.display = 'block'; // Tampilkan kembali dialog
+
+          // Reset health bar pemain jika kembali dari fight new foe (agar tidak memulai dengan hp rendah)
+          document.querySelector(".info.you > .wrap > .healthbar").style.width = "14vmin";
+          document.querySelector(".info.you > .wrap > .health").innerHTML = "10000/10000";
+          health_player = 10000;
+
+          say("A new wild Pokémon appeared! @");
+          loadFoe(true); // Muat lawan baru
+
+          // Reset status attack dan move selection
+          attacking = false; // Penting: reset ini agar game menunggu input pertama
+          attack = undefined; // Reset timeout serangan
+
+          // Reset PP moves (penting agar bisa menyerang lagi)
+          pp = [35, 40, 10]; // Reset ke nilai awal
+          document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[0] + "/35"; // Update tampilan PP
+          selectedMove = "tackle"; // Reset move yang terpilih secara default
+
+          // Reset kelas animasi pemain jika dia terkena efek dari pertarungan sebelumnya
+          document.querySelector(".pokemon.you").classList.remove("fainted", "tackle", "splash", "shaking", "damaged", "showHitmarker");
+          document.querySelector(".pokemon.foe").classList.remove("fainted", "tackle", "splash", "shaking", "damaged", "showHitmarker"); // Juga reset foe jika ada kelas sisa
+
+          // Lanjutkan alur game ke giliran pemain setelah lawan baru muncul
+          setTimeout(function() {
+              say("What will<br/>" + player.name.toUpperCase() + " do? @"); // Tampilkan dialog awal
+              document.querySelector(".moveselection").style.display = "block"; // Tampilkan menu move
+          }, 2000); // Beri waktu dialog untuk muncul
+      }
+
+      function returnToSelection() {
+          document.querySelector(".end-battle-options").style.display = 'none'; // Sembunyikan tombol
+          // Sembunyikan semua elemen game
+          document.querySelector(".pokemon.you").style.display = 'none';
+          document.querySelector(".pokemon.foe").style.display = 'none';
+          document.querySelector(".dialogue").style.display = 'none';
+          document.querySelector(".info.foe").style.display = 'none';
+          document.querySelector(".info.you").style.display = 'none';
+          document.querySelector(".moveselection").style.display = 'none'; // Pastikan menu move juga tersembunyi
+
+          // Hentikan semua interval dan timeout yang mungkin sedang berjalan
+          clearInterval(textInterval); // Hentikan penulisan teks
+          clearTimeout(attack);        // Hentikan timeout serangan
+          clearInterval(slapInterval); // Hentikan slap interval jika doubleslap sedang berjalan
+          textInterval = undefined;    // Clear global variable
+          attack = undefined;          // Clear global variable
+          slapInterval = undefined;    // Clear global variable
+          taker = undefined; // Reset taker
+
+          // Reset kelas animasi pada Pokémon
+          document.querySelector(".pokemon.you").classList.remove("fainted", "tackle", "splash", "shaking", "damaged", "showHitmarker");
+          document.querySelector(".pokemon.foe").classList.remove("fainted", "tackle", "splash", "shaking", "damaged", "showHitmarker");
+
+
+          // Tampilkan menu pemilihan
+          document.querySelector(".pokemon-selection-menu").style.display = 'flex';
+          document.querySelector(".start-battle-button").disabled = true; // Nonaktifkan tombol Start Battle sampai ada pilihan baru
+          document.querySelectorAll('.pokemon-choice').forEach(choice => {
+              choice.classList.remove('selected'); // Hapus pilihan sebelumnya
+          });
+          selectedPlayerPokemonId = null; // Reset pilihan pemain
+
+          // Reset status game
+          attacking = false;
+          pokemon_foe = Math.floor(Math.random() * (max - min + 1)) + min; // Acak lawan baru untuk putaran berikutnya
+
+          // Reset PP moves (penting agar bisa menyerang lagi)
+          pp = [35, 40, 10]; // Reset ke nilai awal
+          // Tampilan PP akan diupdate saat game dimulai kembali dari startBattle()
+          selectedMove = "tackle"; // Reset move yang terpilih secara default
+
+      }
+      // --- AKHIR FUNGSI BARU ---
+
+      // https://stackoverflow.com/questions/45866873/cropping-an-html-canvas-to-the-width-height-of-its-visible-pixels-content
+      // ctx is the 2d context of the canvas to be trimmed
+      // This function will return false if the canvas contains no or no non transparent pixels.
+      // Returns true if the canvas contains non transparent pixels
+      function trimCanvas(ctx) {
+        // removes transparent edges
+        var x, y, w, h, top, left, right, bottom, data, idx1, idx2, found, imgData;
+        w = ctx.canvas.width;
+        h = ctx.canvas.height;
+        if (!w && !h) {
+          return false;
+        }
+        imgData = ctx.getImageData(0, 0, w, h);
+        data = new Uint32Array(imgData.data.buffer);
+        idx1 = 0;
+        idx2 = w * h - 1;
+        found = false;
+        // search from top and bottom to find first rows containing a non transparent pixel.
+        for (y = 0; y < h && !found; y += 1) {
+          for (x = 0; x < w; x += 1) {
+            if (data[idx1++] && !top) {
+              top = y + 1;
+              if (bottom) {
+                // top and bottom found then stop the search
+                found = true;
+                break;
+              }
+            }
+            if (data[idx2--] && !bottom) {
+              bottom = h - y - 1;
+              if (top) {
+                // top and bottom found then stop the search
+                found = true;
+                break;
+              }
+            }
+          }
+          if (y > h - y && !top && !bottom) {
+            return false;
+          } // image is completely blank so do nothing
+        }
+        top -= 1; // correct top
+        found = false;
+        // search from left and right to find first column containing a non transparent pixel.
+        for (x = 0; x < w && !found; x += 1) {
+          idx1 = top * w + x;
+          idx2 = top * w + (w - x - 1);
+          for (y = top; y <= bottom; y += 1) {
+            if (data[idx1] && !left) {
+              left = x + 1;
+              if (right) {
+                // if left and right found then stop the search
+                found = true;
+                break;
+              }
+            }
+            if (data[idx2] && !right) {
+              right = w - x - 1;
+              if (left) {
+                // if left and right found then stop the search
+                found = true;
+                break;
+              }
+            }
+            idx1 += w;
+            idx2 += w;
+          }
+        }
+        left -= 1; // correct left
+        if (w === right - left + 1 && h === bottom - top + 1) {
+          return true;
+        } // no need to crop if no change in size
+        w = right - left + 1;
+        h = bottom - top + 1;
+        ctx.canvas.width = w;
+        ctx.canvas.height = h;
+        ctx.putImageData(imgData, -left, -top);
+        return true;
+      }
+    </script>
+
+  </body>
+</html>
