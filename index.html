@@ -736,9 +736,9 @@
         <div class="moveselection">
           <div class="moves">
             <div class="arrow topleft"></div>
-            <div class="move tackle" id="0" onclick="selectMove(this)">TACKLE</div>
+            <div class="move tackle" id="0" onclick="selectMove(this)">ATTACK</div>
             <div class="move splash" id="1" onclick="selectMove(this)">SPLASH</div>
-            <div class="move doubleslap" id="2" onclick="selectMove(this)">DOUBLESLAP</div>
+            <div class="move doubleslap" id="2" onclick="selectMove(this)">DOUBLE KICK</div>
             <div class="move" id="3" onclick="selectMove(this)">-</div>
           </div>
           <div class="moveinfo">
@@ -834,7 +834,7 @@
 
       // --- VARIABEL UNTUK PEMILIHAN POKEMON ---
       var selectedPlayerPokemonId = null;
-      var selectablePokemonIds = [1, 4, 7, 25, 6, 133, 143, 149]; // Bulbasaur, Charmander, Squirtle, Pikachu, Charizard, Eevee, Snorlax, Dragonite
+      var selectablePokemonIds = [1, 4, 7, 25, 6, 95, 130, 132, 133, 143, 149, 150]; // Bulbasaur, Charmander, Squirtle, Pikachu, Charizard, Eevee, Snorlax, Dragonite
 
       // Global variables for timers to be cleared
       var textInterval;
@@ -1219,8 +1219,8 @@
         }
 
         taker = dealer == "you" ? "foe" : "you";
-        if (dealer == "you") say(player.name.toUpperCase() + " used<br/>TACKLE! @");
-        else say("Wild " + foe.name.toUpperCase() + " used<br/>TACKLE! @");
+        if (dealer == "you") say(player.name.toUpperCase() + " used<br/>ATTACK! @");
+        else say("Wild " + foe.name.toUpperCase() + " used<br/>ATTACK! @");
 
         attack = setTimeout(function () {
           document.querySelector(".pokemon." + dealer).classList.add("tackle");
@@ -1277,8 +1277,8 @@
         }
 
         taker = dealer == "you" ? "foe" : "you";
-        if (dealer == "you") say(player.name.toUpperCase() + " used<br/>DOUBLESLAP! @");
-        else say("Wild " + foe.name.toUpperCase() + " used<br/>DOUBLESLAP! @");
+        if (dealer == "you") say(player.name.toUpperCase() + " used<br/>DOUBLE KICK! @");
+        else say("Wild " + foe.name.toUpperCase() + " used<br/>DOUBLE KICK! @");
 
         slapCount = 0;
         slaps = Math.floor(Math.random() * 4) + 1; // At least 1 slap, up to 5 slaps (0-4 + 1)
