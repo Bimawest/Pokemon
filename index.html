@@ -52,7 +52,7 @@
         height: 50%;
         background-color: #222;
 
-        transition: top 3s ease-in;
+        transition: top 2s ease-in;
 
         z-index: 999;
       }
@@ -411,7 +411,7 @@
       .moveselection > .moves > .move:nth-child(even) { /* Kolom kanan */
           /* float: left; */
       }
-      
+
       .moveselection > .moves > .arrow {
         width: 3.25vmin;
         height: 3.25vmin;
@@ -582,8 +582,7 @@
         animation-timing-function: linear;
       }
 
-      /* Renamed from splash to heal_animation */
-      @keyframes heal_animation {
+      @keyframes heal {
         0% { transform: translateY(0) scaleY(1); }
         12.5% { transform: translateY(3vmin) scaleY(0.9); }
         25% { transform: translateY(-1vmin) scaleY(1.1); }
@@ -593,8 +592,8 @@
         75% { transform: translateY(-1vmin) scaleY(1.1); }
         87.5% { transform: translateY(0) scaleY(1); }
       }
-      .pokemon.heal_animation { /* Updated class name */
-        animation: heal_animation;
+      .pokemon.heal {
+        animation: heal;
         animation-duration: 2s;
         animation-timing-function: linear;
       }
@@ -624,7 +623,7 @@
         margin-bottom: 3vmin;
         text-align: center;
       }
-
+      
       .pokemon-text {
         color: #FFD700; /* Kuning standar */
         font-weight: bold; /* Opsional: Membuat teks lebih tebal */
@@ -830,7 +829,7 @@
           foe = { sprites: {} },
           health_player,
           health_foe;
-      var foeMoves = [tackle, tackle, doubleslap]; // Removed splash
+      var foeMoves = [tackle, tackle, doubleslap];
       var exceptions = ["ho-oh", "porygon-z", "jangmo-o", "hakamo-o", "kommo-o", "nidoran-m", "nidoran-f", "mr-mime", "type-null", "tapu-koko", "tapu-lele", "tapu-bulu", "tapu-fini"];
 
       var changes = {
@@ -858,7 +857,7 @@
         "tackle": tackle,
         "doubleslap": doubleslap
       };
-      var pp = [35, 10, 5]; // Initial PP values (Tackle, Doubleslap, Heal)
+      var pp = [35, 10, 5]; // Initial PP values (Tackle, Splash, Doubleslap, Heal)
       var selectedMove = "tackle";
 
       // --- VARIABEL UNTUK PEMILIHAN POKEMON ---
@@ -985,7 +984,7 @@
           health_foe = 25; // Reset nilai kesehatan lawan
 
           // Reset PP moves
-          pp = [35, 10, 5]; // Reset ke nilai awal (Tackle, Doubleslap, Heal)
+          pp = [35, 10, 5]; // Reset ke nilai awal (Tackle, Splash, Doubleslap, Heal)
           document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[0] + "/35"; // Update tampilan PP
           selectedMove = "tackle"; // Reset move yang terpilih secara default
 
@@ -996,14 +995,14 @@
           textInterval = undefined;
           attack = undefined;
           slapInterval = undefined;
-
+          
           // Reset status game
           attacking = false; // <<< KRITIS: Membuat game menunggu input pemain
           taker = undefined; // Reset taker variable
 
           // Hapus kelas animasi dari kedua pokemon
-          document.querySelector(".pokemon.you").classList.remove("fainted", "tackle", "heal_animation", "shaking", "damaged", "showHitmarker");
-          document.querySelector(".pokemon.foe").classList.remove("fainted", "tackle", "heal_animation", "shaking", "damaged", "showHitmarker");
+          document.querySelector(".pokemon.you").classList.remove("fainted", "tackle", "heal", "shaking", "damaged", "showHitmarker");
+          document.querySelector(".pokemon.foe").classList.remove("fainted", "tackle", "heal", "shaking", "damaged", "showHitmarker");
 
 
           fetch("https://pokeapi.co/api/v2/pokemon/" + pokemon_player).then(function (x) {
@@ -1039,7 +1038,7 @@
         if (again) pokemon_foe = Math.floor(Math.random() * (max - min + 1)) + min;
 
         // Reset tampilan Pokémon lawan sebelum memuat yang baru
-        document.querySelector(".pokemon.foe").classList.remove("fainted", "tackle", "heal_animation", "shaking", "damaged", "showHitmarker");
+        document.querySelector(".pokemon.foe").classList.remove("fainted", "tackle", "heal", "shaking", "damaged", "showHitmarker"); // Hapus semua kelas animasi
         document.querySelector(".info.foe > .wrap > .healthbar").style.width = "15vmin"; // Lebar penuh
         document.querySelector(".info.foe > .wrap > .healthbar").style.right = "var(--font-size)";
         document.querySelector(".info.foe > .wrap > .health").innerHTML = "25/25"; // Reset teks health
@@ -1126,57 +1125,85 @@
         }
 
         var move = elem.classList[1]; // Get move name from second class
-        var a = document.querySelector(".moveselection > .moves > .arrow");
-        var t = document.querySelector(".moveselection > .moveinfo > .type");
-        var p = document.querySelector(".moveselection > .moveinfo > .pp");
 
-        a.classList.remove("topleft", "botleft", "topright", "botright"); // Remove all existing arrow classes
-
-        // Update UI for selected move (arrow, PP, type) immediately on click
-        switch (elem.id) {
-          case "0": // Tackle
-            a.classList.add("topleft");
-            t.innerHTML = "NORMAL";
-            p.innerHTML = pp[0] + "/35";
-            break;
-          case "1": // Doubleslap
-            a.classList.add("botleft");
-            t.innerHTML = "NORMAL";
-            p.innerHTML = pp[1] + "/10";
-            break;
-          case "2": // Heal
-            a.classList.add("topright"); // Position for Heal button
-            t.innerHTML = "STATUS";
-            p.innerHTML = pp[2] + "/5";
-            break;
-          case "3": // Run
-            a.classList.add("botright"); // Position for Run button
-            t.innerHTML = "ESCAPE";
-            p.innerHTML = "--/--"; // Run doesn't use PP
-            break;
+        // Tambahkan kondisi untuk tombol "Heal" dan "Run"
+        if (move === 'heal-move') {
+          selectedMove = 'heal'; // Set selectedMove to 'heal'
+          let moveIndex = 3; // Index for 'heal' in pp array
+          document.querySelector(".moveselection > .moveinfo > .type").innerHTML = "STATUS";
+          document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[moveIndex] + "/5"; // Update with max PP for Heal
+          // Pindahkan panah ke posisi "HEAL"
+          var a = document.querySelector(".moveselection > .moves > .arrow");
+          a.classList.remove("topleft", "botleft", "topright", "botright"); // Hapus semua kelas panah yang ada
+          a.classList.add("heal"); // Tambahkan kelas untuk posisi heal
+          document.querySelector(".moveselection").style.display = "none"; // Sembunyikan menu saat heal
+          ATTACK(); // Langsung eksekusi aksi Heal
+          return;
         }
 
-        // Logic for "double tap" to confirm move
-        if (selectedMove !== move) {
+        if (move === 'run-move') {
+          selectedMove = 'run'; // Set selectedMove to 'run'
+          document.querySelector(".moveselection > .moveinfo > .type").innerHTML = "ESCAPE";
+          document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = "--/--"; // Run doesn't use PP
+          // Pindahkan panah ke posisi "RUN"
+          var a = document.querySelector(".moveselection > .moves > .arrow");
+          a.classList.remove("topleft", "botleft", "topright", "botright"); // Hapus semua kelas panah yang ada
+          a.classList.add("run"); // Tambahkan kelas untuk posisi run
+          document.querySelector(".moveselection").style.display = "none"; // Sembunyikan menu saat run
+          ATTACK(); // Langsung eksekusi aksi Run
+          return;
+        }
+
+        if (selectedMove != move) {
             selectedMove = move; // Select the move
         } else {
             // Move confirmed, attempt to attack
+            // Check PP before attacking
             let moveIndex;
             switch(selectedMove) {
                 case "tackle": moveIndex = 0; break;
                 case "doubleslap": moveIndex = 1; break;
-                case "heal": moveIndex = 2; break; // Index for heal
-                case "run": ATTACK(); return; // Run doesn't have PP, execute immediately
-                default: return;
+                case "heal-move": moveIndex = 2; break; // Use heal-move as the class
+                case "run-move": ATTACK(); return; // Use run-move as the class
+                default: return; // Should not happen
             }
 
-            if (pp[moveIndex] === 0) {
+            if (pp[moveIndex] == 0) {
                 say("Not enough PP for " + selectedMove.toUpperCase() + "! @");
                 return; // Prevent attack if no PP
             }
 
             document.querySelector(".moveselection").style.display = "none";
             ATTACK(); // Proceed with attack
+        }
+
+        // Update UI for selected move (arrow, PP, type)
+        var a = document.querySelector(".moveselection > .moves > .arrow");
+        var t = document.querySelector(".moveselection > .moveinfo > .type");
+        var p = document.querySelector(".moveselection > .moveinfo > .pp");
+        a.classList.remove("topleft", "botleft", "topright", "botright"); // Hapus semua kelas panah yang ada
+
+        switch (elem.id) {
+          case "0":
+            a.classList.add("topleft");
+            t.innerHTML = "NORMAL";
+            p.innerHTML = pp[0] + "/35";
+            break;
+          case "1":
+            a.classList.add("botleft");
+            t.innerHTML = "NORMAL";
+            p.innerHTML = pp[1] + "/10";
+            break;
+          case "2":
+            a.classList.add("topright");
+            t.innerHTML = "STATUS";
+            p.innerHTML = pp[2] + "/5";
+            break;
+          case "3":
+            a.classList.add("botright");
+            t.innerHTML = "ESCAPE";
+            p.innerHTML = "--/--";
+            break;
         }
       }
 
@@ -1202,8 +1229,8 @@
       function NEXT() {
         // Only proceed if a battle state is waiting for a click (attack is 99)
         // and if it's not currently processing an attack (attacking is not false)
-        if (attacking !== false && attack === 99) {
-            if (attacking === "you") { // Player just attacked, now foe's turn
+        if (attacking !== false && attack == 99) {
+            if (attacking == "you") { // Player just attacked, now foe's turn
                 // Check if foe fainted before foe attacks
                 if (health_foe <= 0) {
                     // Foe already fainted, proceed to end battle options
@@ -1217,7 +1244,7 @@
                 }, 1500); // Give time for text to display
                 attacking = "foe";
                 attack = 90; // Set a temporary value to indicate foe's attack is pending
-            } else if (attacking === "foe" || attacking === "player_healing") { // Foe just attacked, or player just healed, now player's turn
+            } else if (attacking == "foe" || attacking == "player_healing") { // Foe just attacked, or player just healed, now player's turn
                 // Check if player fainted before player's turn
                 if (health_player <= 0) {
                     say(player.name.toUpperCase() + " fainted!");
@@ -1234,18 +1261,18 @@
                 attacking = false; // Player's turn to choose move
                 selectedMove = "tackle"; // Reset selected move for new turn
                 document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[0] + "/35"; // Reset PP display to Tackle
-                document.querySelector(".moveselection > .moves > .arrow").classList.remove("botleft", "topright", "botright");
+                document.querySelector(".moveselection > .moves > .arrow").classList.remove("botleft", "topright", "botright", "heal", "run");
                 document.querySelector(".moveselection > .moves > .arrow").classList.add("topleft"); // Reset arrow
                 document.querySelector(".moveselection > .moveinfo > .type").innerHTML = "NORMAL";
             }
-            // If attacking === "player_running", NEXT() won't be called because returnToSelection handles game state
+            // If attacking == "player_running", NEXT() won't be called because returnToSelection handles game state
         }
       }
 
       function tackle(dealer) {
         let moveIndex = 0; // Tackle is at index 0 in pp array
-        if (dealer === "you") {
-            if (pp[moveIndex] === 0) {
+        if (dealer == "you") {
+            if (pp[moveIndex] == 0) {
                 say("Not enough PP for TACKLE! @");
                 attacking = false;
                 document.querySelector(".moveselection").style.display = "block";
@@ -1255,8 +1282,8 @@
             document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[moveIndex] + "/35";
         }
 
-        taker = dealer === "you" ? "foe" : "you";
-        if (dealer === "you") say(player.name.toUpperCase() + " MENGGUNAKAN<br/>ATTACK! @");
+        taker = dealer == "you" ? "foe" : "you";
+        if (dealer == "you") say(player.name.toUpperCase() + " MENGGUNAKAN<br/>ATTACK! @");
         else say("Wild " + foe.name.toUpperCase() + " MENGGUNAKAN<br/>ATTACK! @");
 
         attack = setTimeout(function () {
@@ -1273,20 +1300,20 @@
       var slapCount;
       var slaps;
       function doubleslap(dealer) {
-        let moveIndex = 1; // Doubleslap is at index 1 in pp array (updated index)
-        if (dealer === "you") {
-            if (pp[moveIndex] === 0) {
-                say("Not enough PP for DOUBLE KICK! @");
-                attacking = false;
-                document.querySelector(".moveselection").style.display = "block";
-                return;
-            }
-            pp[moveIndex]--;
-            document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[moveIndex] + "/10";
+    let moveIndex = 1; // Correct index for Doubleslap in pp array
+    if (dealer == "you") {
+        if (pp[moveIndex] == 0) {
+            say("Not enough PP for DOUBLE KICK! @");
+            attacking = false;
+            document.querySelector(".moveselection").style.display = "block";
+            return;
         }
-
-        taker = dealer === "you" ? "foe" : "you";
-        if (dealer === "you") say(player.name.toUpperCase() + " MENGGUNAKAN<br/>DOUBLE KICK! @");
+        pp[moveIndex]--;
+        document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[moveIndex] + "/10";
+    }
+    // ... rest of your doubleslap function ...
+        taker = dealer == "you" ? "foe" : "you";
+        if (dealer == "you") say(player.name.toUpperCase() + " MENGGUNAKAN<br/>DOUBLE KICK! @");
         else say("Wild " + foe.name.toUpperCase() + " MENGGUNAKAN<br/>DOUBLE KICK! @");
 
         slapCount = 0;
@@ -1317,9 +1344,10 @@
       }
 
       // --- NEW FUNCTION: HEAL POKEMON ---
+            // --- NEW FUNCTION: HEAL POKEMON ---
       function healPokemon(target) {
-        let moveIndex = 2; // Index for 'heal' in pp array (now 2)
-        if (pp[moveIndex] === 0) {
+        let moveIndex = 2; // Index for 'heal' in pp array, assuming it's the 3rd move in the array, if it's the 4th, change to 3
+        if (pp[moveIndex] == 0) {
           say("Not enough PP for HEAL! @");
           attacking = false; // Player can choose again
           document.querySelector(".moveselection").style.display = "block";
@@ -1334,35 +1362,38 @@
 
         say(player.name.toUpperCase() + " MENGGUNAKAN<br/>HEAL! @");
 
+        // Add the heal animation class to the player's Pokémon
+        document.querySelector(".pokemon." + target).classList.add("heal");
+
         attack = setTimeout(function () {
-          // Add heal animation
-          document.querySelector(".pokemon." + target).classList.add("heal_animation");
+          health_player = Math.min(maxHealth, health_player + healAmount); // Tambah HP, jangan melebihi max
+          healthTo(health_player, target, false); // Update health bar, false for no crit
+
+          // Remove the heal animation class after it completes (2 seconds as per your CSS)
+          setTimeout(() => {
+              document.querySelector(".pokemon." + target).classList.remove("heal");
+          }, 2000); // Match this with your CSS animation duration for 'heal'
+
+          // Setelah heal, giliran musuh
+          say(player.name.toUpperCase() + " memulihkan " + healAmount + " HP! @");
+
+          // Tunggu sebentar lalu giliran musuh
           setTimeout(function() {
-            document.querySelector(".pokemon." + target).classList.remove("heal_animation");
-
-            health_player = Math.min(maxHealth, health_player + healAmount); // Tambah HP, jangan melebihi max
-            healthTo(health_player, target, false); // Update health bar, false for no crit
-
-            // Setelah heal, giliran musuh
-            say(player.name.toUpperCase() + " memulihkan " + healAmount + " HP! @");
-
-            // Tunggu sebentar lalu giliran musuh
-            setTimeout(function() {
-              // Sama seperti di NEXT() saat giliran musuh
-              if (health_foe <= 0) { // Cek lagi jika musuh entah bagaimana fainted (misal, efek dari turn sebelumnya)
-                  endBattleOptions();
-                  return;
-              }
-              say("Wild " + foe.name.toUpperCase() + " MENYERANG @");
-              setTimeout(function () {
-                  foeMoves[Math.floor(Math.random() * foeMoves.length)]("foe");
-              }, 1500);
-              attacking = "foe"; // Set state for foe's turn
-              attack = 90; // Set temporary value, NEXT() will be called after foe's attack finishes
-            }, 1500); // Give time for heal text to display
-          }, 2050); // Duration of heal_animation
+            // Sama seperti di NEXT() saat giliran musuh
+            if (health_foe <= 0) { // Cek lagi jika musuh entah bagaimana fainted (misal, efek dari turn sebelumnya)
+                endBattleOptions();
+                return;
+            }
+            say("Wild " + foe.name.toUpperCase() + " MENYERANG @");
+            setTimeout(function () {
+                foeMoves[Math.floor(Math.random() * foeMoves.length)]("foe");
+            }, 1500);
+            attacking = "foe"; // Set state for foe's turn
+            attack = 90; // Set temporary value, NEXT() will be called after foe's attack finishes
+          }, 1500); // Give time for heal text to display
         }, 1000);
       }
+
 
       // --- NEW FUNCTION: RUN FROM BATTLE ---
       function runFromBattle() {
@@ -1382,7 +1413,7 @@
               document.querySelector(".pokemon." + taker).classList.remove("shaking");
             }, 340);
           }
-          if (hitmarker) {
+          if (hitmarker) { // Changed shaking to hitmarker to match function parameter
             document.querySelector(".pokemon." + taker).classList.add("showHitmarker");
             setTimeout(function () {
               document.querySelector(".pokemon." + taker).classList.remove("showHitmarker");
@@ -1402,7 +1433,7 @@
                 // if you want explicit critical hit messages
             }
 
-            if (taker === "foe") {
+            if (taker == "foe") {
               health_foe -= damage;
               healthTo(Math.round(health_foe), "foe", critical);
             } else {
@@ -1415,7 +1446,7 @@
 
       function healthTo(target, taker, crit) {
         var interval;
-        if (taker === "you") {
+        if (taker == "you") {
           var healthElement = document.querySelector(".info.you > .wrap > .health");
           var currentDisplayHealth = parseInt(healthElement.innerHTML.split("/")[0]);
           var maxHealth = parseInt(healthElement.innerHTML.split("/")[1]);
@@ -1424,7 +1455,7 @@
 
           // If current health is already at target, or increasing, adjust logic
           // Only animate if health is decreasing
-          if (currentDisplayHealth === target) {
+          if (currentDisplayHealth == target) {
               if (target <= 0) {
                   healthElement.innerHTML = "0/" + maxHealth;
                   say(player.name.toUpperCase() + " fainted!");
@@ -1434,7 +1465,7 @@
                     returnToSelection(); // Kembali ke menu pemilihan setelah fainted
                   }, 2000); // Give time for faint animation
               } else {
-                  // If health didn't change (e.g., full HP on heal), allow NEXT click
+                  // If health didn't change (e.g., Splash or full HP on heal), allow NEXT click
                   attack = 99;
               }
               return;
@@ -1442,7 +1473,7 @@
 
           var healthDecrement = (currentDisplayHealth - target) / 10; // Divide into 10 steps for smooth animation
           var step = 0;
-          if (healthDecrement !== 0) { // Only animate if there's a change
+          if (healthDecrement != 0) { // Only animate if there's a change
               interval = setInterval(function () {
                 step++;
                 currentDisplayHealth -= healthDecrement;
@@ -1536,20 +1567,20 @@
           attack = undefined; // Reset timeout serangan
 
           // Reset PP moves (penting agar bisa menyerang lagi)
-          pp = [35, 10, 5]; // Reset ke nilai awal (Tackle, Doubleslap, Heal)
+          pp = [35, 10, 5]; // Reset ke nilai awal
           document.querySelector(".moveselection > .moveinfo > .pp").innerHTML = pp[0] + "/35"; // Update tampilan PP
           selectedMove = "tackle"; // Reset move yang terpilih secara default
 
           // Reset kelas animasi pemain jika dia terkena efek dari pertarungan sebelumnya
-          document.querySelector(".pokemon.you").classList.remove("fainted", "tackle", "heal_animation", "shaking", "damaged", "showHitmarker");
-          document.querySelector(".pokemon.foe").classList.remove("fainted", "tackle", "heal_animation", "shaking", "damaged", "showHitmarker");
+          document.querySelector(".pokemon.you").classList.remove("fainted", "tackle", "heal", "shaking", "damaged", "showHitmarker");
+          document.querySelector(".pokemon.foe").classList.remove("fainted", "tackle", "heal", "shaking", "damaged", "showHitmarker"); // Juga reset foe jika ada kelas sisa
 
           // Lanjutkan alur game ke giliran pemain setelah lawan baru muncul
           setTimeout(function() {
               say("What will<br/>" + player.name.toUpperCase() + " do? @"); // Tampilkan dialog awal
               document.querySelector(".moveselection").style.display = "block"; // Tampilkan menu move
               // Reset panah ke posisi default tackle
-              document.querySelector(".moveselection > .moves > .arrow").classList.remove("botleft", "topright", "botright", "heal", "run");
+              document.querySelector(".moveselection > .moves > .arrow").classList.remove("botleft", "topright", "botright");
               document.querySelector(".moveselection > .moves > .arrow").classList.add("topleft");
               document.querySelector(".moveselection > .moveinfo > .type").innerHTML = "NORMAL";
           }, 2000); // Beri waktu dialog untuk muncul
@@ -1575,8 +1606,8 @@
           taker = undefined; // Reset taker
 
           // Reset kelas animasi pada Pokémon
-          document.querySelector(".pokemon.you").classList.remove("fainted", "tackle", "heal_animation", "shaking", "damaged", "showHitmarker");
-          document.querySelector(".pokemon.foe").classList.remove("fainted", "tackle", "heal_animation", "shaking", "damaged", "showHitmarker");
+          document.querySelector(".pokemon.you").classList.remove("fainted", "tackle", "heal", "shaking", "damaged", "showHitmarker");
+          document.querySelector(".pokemon.foe").classList.remove("fainted", "tackle", "heal", "shaking", "damaged", "showHitmarker");
 
 
           // Tampilkan menu pemilihan
@@ -1592,7 +1623,7 @@
           pokemon_foe = Math.floor(Math.random() * (max - min + 1)) + min; // Acak lawan baru untuk putaran berikutnya
 
           // Reset PP moves (penting agar bisa menyerang lagi)
-          pp = [35, 10, 5]; // Reset ke nilai awal (Tackle, Doubleslap, Heal)
+          pp = [35, 10, 5]; // Reset ke nilai awal
           // Tampilan PP akan diupdate saat game dimulai kembali dari startBattle()
           selectedMove = "tackle"; // Reset move yang terpilih secara default
 
@@ -1662,7 +1693,7 @@
                 found = true;
                 break;
               }
-              }
+            }
             idx1 += w;
             idx2 += w;
           }
